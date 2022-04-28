@@ -1,0 +1,16 @@
+module.exports={
+    express:require('express'),
+    morgan : require('morgan'),
+    winston:require('winston'),
+    mongoose:require('mongoose'),
+    bcrypt:require('bcrypt'),
+    jwt:require('jsonwebtoken'),
+    socket:require('socket.io'),
+    http:require('http'),
+    https:require('https'),
+    multer:require('multer'),
+    moment: require('moment'),
+    nodemailer:require('nodemailer'),
+    formdata : require('express-formidable-v2'),
+    moment:require('moment'),
+}  
