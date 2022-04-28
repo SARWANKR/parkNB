@@ -99,8 +99,8 @@ router.post('/user/add/coHostProperty',isAuthenticated,joiValidation,service.coH
 
 /*************************************REQUEST MODEL******************************************* */
 
-router.post('/user/sendRequest', isAuthenticated,service.sendRequest);
-router.post('/user/acceptRequest', isAuthenticated,service.acceptOrDecline);
+router.post('/user/sendRequest', isAuthenticated,joiValidation,service.sendRequest);
+router.post('/user/acceptDecline', isAuthenticated,joiValidation,service.acceptOrDecline);
 
 /*************************************REPORT USER********************************************* */
 
@@ -221,12 +221,6 @@ function joiValidation(req,res,next) {
         "review" : Joi.string().optional().allow(''),
         "rating" : Joi.number().optional().allow(''),
     });
-    console.log(req.files,"dataaa")
-    // const govtIdSchema = Joi.object({
-    //     "userId" : Joi.string().required(),
-    //     "type" : Joi.string().required(),
-    //     "files" : Joi.array().required(),
-    // });
 
     const govSchema = Joi.object({
         "userId" : Joi.string().required(),
@@ -329,6 +323,7 @@ function joiValidation(req,res,next) {
         "propertyId" : Joi.string().required(),
 
     })
+
     const sendRequestSchema = Joi.object({
         "userId" : Joi.string().required(),
         "propertyId" : Joi.string().required(),
@@ -338,11 +333,8 @@ function joiValidation(req,res,next) {
 
     })
 
-    const acceptRequestSchema = Joi.object({
-        "userId" : Joi.string().required(),
-        "propertyId" : Joi.string().required(),
-        "start_date" : Joi.string().required(),
-        "end_date" : Joi.string().required(),
+    const acceptDeclineRequestSchema = Joi.object({
+        "requestId" : Joi.string().required(),
         "status" : Joi.string().required(),
     })
     const reportUserSchema=Joi.object({
@@ -380,6 +372,8 @@ if(req.path=='/user/add/selectDates') var { error , value} = selectDatesSchema.v
 if(req.path =='/user/add/propertyReview') var { error , value} = propertyReviewSchema.validate(req.body,options)
 if(req.path =='/user/add/addHostReview') var { error , value} = hostReviewSchema.validate(req.body,options)
 if(req.path =='/user/add/updateEvent') var { error , value} = updateEvent.validate(req.body,options)
+if(req.path =='/user/sendRequest') var { error , value} = sendRequestSchema.validate(req.body,options)
+if(req.path =='/user/acceptDecline') var { error , value} = acceptDeclineRequestSchema.validate(req.body,options)
 // if(req.path=='/user/fetchPropertyList') var { error , value} = fetchPropertyListSchema.validate(req.body,options)
 if(req.path=='/user/reportUser') var { error , value} = reportUserSchema.validate(req.body,options)
 if(req.path=='/user/add/coHostProperty') var { error , value} = CohostSchema.validate(req.body,options)
@@ -394,6 +388,7 @@ if(error){
 }
 else{
     req.body=value;
+
     next();
 }
 }
@@ -1547,10 +1542,10 @@ async function isAuthenticated(req,res,next) {
  *             properties:
  *              propertyId:
  *                type: string
- *              dates:
- *                 type: array
- *                 items:
- *                   type: string
+ *              start_date:
+ *                type: string
+ *              end_date:
+ *                type: string
  *     responses:
  *       200:
  *         description: user login
@@ -1562,5 +1557,41 @@ async function isAuthenticated(req,res,next) {
  *         description: Some server error
  */
 
+
+/**
+ * @swagger
+ * /user/acceptDecline:
+ *   post:
+ *     summary: Accept or Decline Request
+ *     description: Property Id and Dates are required
+ *     tags: [users]
+ *     parameters:
+ *      - in: header
+ *        description: required
+ *        name: x-token
+ *        schema:
+ *          type: string
+ *        required: true
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *              requestId:
+ *                type: string
+ *              status:
+ *                type: string
+ *     responses:
+ *       200:
+ *         description: user login
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *       500:
+ *         description: Some server error
+ */
 
 module.exports=router;

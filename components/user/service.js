@@ -14,6 +14,7 @@ const reportModel = require('./models/report');
 const eventBookingModel = require("./models/eventBooking");
 const confirmedBookingModel = require("./models/confirmedBooking");
 const commonfunction = require("../commonfunctions");
+const moment = require("moment");
 const message = require("../commonfunctions").customMessages();
 const lib = require("../../index");
 const { mongoose } = require("../../index");
@@ -2736,7 +2737,10 @@ bookProperty : async (req,res) => {
     var body={
       propertyId:req.body.propertyId,
       accessToken:req.headers['x-token'],
-      dates:req.body.dates
+      // select_dates: {
+        start_date: req.body.start_date,
+        end_date: req.body.end_date,
+      // },
     }
 
     //Fetching User Details 
@@ -2766,9 +2770,13 @@ bookProperty : async (req,res) => {
      }else{
       var newRequest=new bookingModel({
         propertyId:body.propertyId,
-        dates:body.dates,
+        select_dates: {
+          start_date: body.start_date,
+          end_date: body.end_date,
+        },
         userId:user._id
       })
+      console.log(newRequest,"newRequesXXXXXXXXXXXXXXXXXXXXXXXXXXXXXt");
       var saveDoc=newRequest.save()
       let response = commonfunction.checkRes({requestId:newRequest._id});
       response.message="Request submitted successfully"
@@ -2793,8 +2801,8 @@ bookProperty : async (req,res) => {
       var event=await bookingModel.aggregate([
         {
           '$match': {
-            '_id': lib.mongoose.Types.ObjectId(body.requestId),
-            "status":{"$ne":body.status}
+            '_id': new mongoose.Types.ObjectId(body.requestId), 
+            'status': {"$ne" : req.body.status}
           }
         }, {
           '$lookup': {
@@ -2806,21 +2814,22 @@ bookProperty : async (req,res) => {
         }, {
           '$unwind': {
             'path': '$property', 
-            'includeArrayIndex': 'strixng', 
+            'includeArrayIndex': 'string', 
             'preserveNullAndEmptyArrays': true
           }
         }
       ])
       var events = Object.assign({}, ...event);
-    //  console.log(events)
+
     } catch (e) {
       logger.error(e);
       return res.status(201).send({status:false,code:201,message:message.ANNONYMOUS});
     }
     try {
       const eLength=Object.keys(events).length
+
       if(eLength>0){
-        if(user._id.toString()==events.event.hostId.toString()){
+        if(user._id.toString()==events.property.userId.toString()){
           if(exist.length>0){
             if(exist[0].status=="1"){
             return res.status(200).send({status:true,code:200,message:"payment is pending"})
@@ -2838,10 +2847,10 @@ bookProperty : async (req,res) => {
     
             var updateRequest = await bookingModel.findOneAndUpdate({_id:body.requestId},data);
             if(body.status=="1"){
-              return res.status(200).send({status:true,code:200,paymentId:updateRequest._id,message:"request accepted payment is pending"})
+              return res.status(200).send({status:true,code:200,paymentId:updateRequest._id,message:"Request Accepted but Payment is Pending"})
             }
             if(body.status=="2"){
-              return res.status(201).send({status:false,code:201,message:"request declined"})
+              return res.status(201).send({status:false,code:201,message:"Request declined"})
             }
           }
         }else{
@@ -2858,6 +2867,8 @@ bookProperty : async (req,res) => {
     }
 
   },
+
+  
 
 // Report User
 
