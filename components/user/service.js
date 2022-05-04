@@ -22,6 +22,10 @@ const env = require("../../env");
 const appCred = require("../../config/appCredentials")[env.instance];
 const path = require("path");
 const parknb = require("../../index");
+const amenitiesModel= require('../admin/models/amenities');
+const interestModel= require('../admin/models/interesttedIn');
+const vehicleModel= require('../admin/models/typeOfVehicle');
+
 
 module.exports = {
   // Generate otp for user
@@ -969,6 +973,171 @@ module.exports = {
     } catch (e) {
       logger.error(e);
       return res.status(201).send({ status: false, code: 201, message: message.ANNONYMOUS });
+    }
+
+  },
+
+  interstedIn: async (req, res) => {
+    try {
+      var user = await userModel.findOne({
+        accessToken: req.headers["x-token"],
+      });
+    } catch (e) {
+      logger.error(e);
+      return res.status(201).send(e);
+    }
+    var interests = req.interests;
+
+    var body = req.body;
+    // console.log(body, "7777777777777777777777777777777777777777")
+    try {
+      var interestedIn = [];
+      for (const obj of body.interests) {
+        var a = {
+          isSelect:true,
+          id:obj
+        }
+        interestedIn.push(a);
+      }
+
+      console.log(interestedIn, "this is the data created ")
+
+      var interstedIn = await userModel.findOneAndUpdate({ _id: user._id }, { interests: interestedIn });
+      console.log(interstedIn, "LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL")
+      interstedIn.save();
+      return res.status(200).send({ status: true, code: 200, message: message.INTERESTED_IN });
+    } catch (e) {
+      logger.error(e);
+      return res.status(201).send({ status: false, code: 201, message: message.ANNONYMOUS });
+    }
+
+
+  },
+
+  addvehicle : async (req, res) => {
+    try {
+      var user = await userModel.findOne({
+        accessToken: req.headers["x-token"],
+      });
+    } catch (e) {
+      logger.error(e);
+      return res.status(201).send(e);
+    }
+    var vehicles = req.vehicles;
+
+    var body = req.body;
+    try {
+      var addvehicle = [];
+      for (const obj of body.vehicles) {
+        var a = {
+          isSelect:true,
+          addvehicle:obj
+        }
+        addvehicle.push(a);
+      }
+      var interstedIn = await userModel.findOneAndUpdate({ _id: user._id }, { vehicles: addvehicle });
+      // interstedIn.save();
+      return res.status(200).send({ status: true, code: 200, message: message.INTERESTED_IN });
+    } catch (e) {
+      logger.error(e);
+      return res.status(201).send({ status: false, code: 201, message: message.ANNONYMOUS });
+    }
+
+
+  },
+
+  amenities : async (req, res) => {
+    try {
+      var user = await userModel.findOne({
+        accessToken: req.headers["x-token"],
+      });
+    } catch (e) {
+      logger.error(e);
+      return res.status(201).send(e);
+    }
+    var amenities = req.amenities;
+
+    var body = req.body;
+    try {
+      var addAmenities = [];
+      for (const obj of body.amenities) {
+        var a = {
+          isSelect:true,
+          addAmenities:obj
+        }
+        addAmenities.push(a);
+        var data = {
+          amenities: addAmenities,
+          radius : body.radius,
+        }
+      }
+      var interstedIn = await userModel.findOneAndUpdate({ _id: user._id }, data);
+      // interstedIn.save();
+      return res.status(200).send({ status: true, code: 200, message: message.INTERESTED_IN });
+    } catch (e) {
+      logger.error(e);
+      return res.status(201).send({ status: false, code: 201, message: message.ANNONYMOUS });
+    }
+
+  },
+
+  // Get the list of interest, vehicle, and amenities
+
+  getdata : async (req, res) => {
+    try {
+      var user = await userModel.findOne({
+        accessToken: req.headers["x-token"],
+      });
+
+      // console.log(req.body, "Hello I am the hakuna matata");
+    } catch (e) {
+      logger.error(e);
+      return res
+        .status(201)
+        .send({ status: false, code: 201, message: message.ANNONYMOUS });
+    }
+
+    var body = req.body;
+    try {
+      if(req.query.status ==1){    // 1 for Interested In
+       var data=await interestModel.find({});
+       const response = commonfunction.checkRes(data);
+       response.message = "Amenities list fetched successfully";
+       logger.info(
+         `url:${req.url},method:${req.method},host:${
+           req.hostname
+         },status:${JSON.stringify({ status: true })}`
+       );
+       return res.status(200).send(response);
+      }
+      if(req.query.status ==2){    // 2 for Vehicle
+        var data=await vehicleModel.find({});
+        const response = commonfunction.checkRes(data);
+        response.message = "Vehicle list fetched successfully";
+        logger.info(
+          `url:${req.url},method:${req.method},host:${
+            req.hostname
+          },status:${JSON.stringify({ status: true })}`
+        );
+        return res.status(200).send(response);
+      }
+      if(req.query.status ==3){    // 3 for Amenities
+        var data=await amenitiesModel.find({});
+        const response = commonfunction.checkRes(data);
+        response.message = "Amenities list fetched successfully";
+        logger.info(
+          `url:${req.url},method:${req.method},host:${
+            req.hostname
+          },status:${JSON.stringify({ status: true })}`
+        );
+        return res.status(200).send(response);
+      }
+    }
+    catch (e) {
+      logger.error(e);
+      return res
+        .status(201)
+        .send({ status: false, code: 201, message: message.ANNONYMOUS });
     }
 
   },
@@ -2380,6 +2549,234 @@ module.exports = {
     }
   },
 
+  // Become superHost
+
+  superhost : async (req, res) => {
+
+    try {
+      var user = await userModel.findOne({
+        accessToken: req.headers["x-token"],
+      });
+
+      console.log(user, "Hello I am the userrr");
+    } catch (e) {
+      logger.error(e);
+      return res
+        .status(201)
+        .send({ status: false, code: 201, message: message.ANNONYMOUS });
+    }
+
+    try {
+
+      var criteria = await userModel.aggregate(
+        [
+          {
+            '$match': {
+              '_id': mongoose.Types.ObjectId(user._id),
+            }
+          }, {
+            '$lookup': {
+              'from': 'addproperties', 
+              'let': {
+                'id': '$_id'
+              }, 
+              'pipeline': [
+                {
+                  '$match': {
+                    '$expr': {
+                      '$eq': [
+                        '$userId', '$$id'
+                      ]
+                    }
+                  }
+                }
+              ], 
+              'as': 'Property'
+            }
+          }, {
+            '$lookup': {
+              'from': 'confirmedbookings', 
+              'let': {
+                'id': '$_id'
+              }, 
+              'pipeline': [
+                {
+                  '$match': {
+                    '$expr': {
+                      '$eq': [
+                        '$userId', '$$id'
+                      ]
+                    }
+                  }
+                }, {
+                  '$project': {
+                    'price': {
+                      '$convert': {
+                        'input': '$price', 
+                        'to': 'double'
+                      }
+                    }
+                  }
+                }, {
+                  '$group': {
+                    '_id': '_id', 
+                    'total': {
+                      '$sum': '$price'
+                    }
+                  }
+                }
+              ], 
+              'as': 'booking'
+            }
+          }, {
+            '$unwind': {
+              'path': '$booking', 
+              'includeArrayIndex': 'string', 
+              'preserveNullAndEmptyArrays': true
+            }
+          }, {
+            '$lookup': {
+              'from': 'hostreviews', 
+              'let': {
+                'id': '$_id'
+              }, 
+              'pipeline': [
+                {
+                  '$match': {
+                    '$expr': {
+                      '$eq': [
+                        '$userId', '$$id'
+                      ]
+                    }
+                  }
+                }, {
+                  '$project': {
+                    'rating': {
+                      '$convert': {
+                        'input': '$rating', 
+                        'to': 'double'
+                      }
+                    }
+                  }
+                }, {
+                  '$group': {
+                    '_id': '_id', 
+                    'count': {
+                      '$count': {}
+                    }, 
+                    'totalrating': {
+                      '$sum': '$rating'
+                    }
+                  }
+                }, {
+                  '$project': {
+                    '_id': 0, 
+                    'avg': {
+                      '$divide': [
+                        '$totalrating', '$count'
+                      ]
+                    }
+                  }
+                }
+              ], 
+              'as': 'review'
+            }
+          }, {
+            '$unwind': {
+              'path': '$review', 
+              'includeArrayIndex': 'string', 
+              'preserveNullAndEmptyArrays': true
+            }
+          }, {
+            '$project': {
+              '_id': 0, 
+              'propertyCount': {
+                '$size': '$Property'
+              }, 
+              'totalprice': '$booking.total', 
+              'avgrating': '$review.avg'
+            }
+          }, {
+            '$addFields': {
+              'cprCount': 10, 
+              'tprice': 100000, 
+              'avgr': 4.5
+            }
+          }, {
+            '$project': {
+              'eligible': {
+                '$switch': {
+                  'branches': [
+                    {
+                      'case': {
+                        '$and': [
+                          {
+                            '$gte': [
+                              '$propertyCount', '$cprCount'
+                            ]
+                          }, {
+                            '$gte': [
+                              '$totalprice', '$tprice'
+                            ]
+                          }, {
+                            '$gte': [
+                              '$avgrating', '$avgr'
+                            ]
+                          }
+                        ]
+                      }, 
+                      'then': true
+                    }
+                  ], 
+                  'default': false
+                }
+              }
+            }
+          }
+        ]
+      )
+
+      const a= Object.assign({},...criteria)
+
+      if(a.eligible==true){
+        console.log(a,'data')
+        var superhost = await userModel.findOneAndUpdate({
+          _id: user._id
+        }, {
+          $set: {
+            superHost: true
+          }
+        }, {
+          new: true
+        });
+        let response = commonfunction.checkRes(superhost);
+        response.message = "You are now a SuperHost";
+        res.status(200).send(response);
+        logger.info(
+          `url:${req.url},method:${req.method},host:${
+            req.hostname
+          },status:${JSON.stringify(response.status)}`
+        );
+      }else{
+
+        var criterias = {
+          Rating : "Greater than 4.5",
+          Price : "Greater than 20000",
+          Property : "Greater than 20"
+        }
+        res.status(201).send({status:false,code:201, message : "You are not eligible to become a superhost Please meet the criteria",criterias});
+        console.log(a,'not')
+      }
+    }
+    catch (e) {
+      logger.error(e);
+      return res
+        .status(201)
+        .send({ status: false, code: 201, message: message.ANNONYMOUS });
+    }
+
+  },
+
   // Get Favorite Property
 
   favoritePropertyList: async (req, res) => {
@@ -2615,6 +3012,34 @@ module.exports = {
 bookProperty : async (req,res) => {
   var body = req.body;
 
+    try {
+
+      
+    }
+    catch (e) {
+      logger.error(e);
+      return res.status(201).send({ status: false, code: 201, message: message.ANNONYMOUS });
+    }
+     try {
+
+      var propertyPrice = await propertyModel.findOne({_id: body.propertyId});
+      console.log(propertyPrice.price, "Hello I am the propertyPrice");
+
+      }
+      catch (e) {
+        logger.error(e);
+         res.status(201).send({ status: false, code: 201, message: message.ANNONYMOUS });
+      }
+      try {
+        var dates = await bookingModel.findOne({_id: body.bookingId});
+        console.log(dates.select_dates, "Hello I am the dates");
+
+      }
+      catch (e) {
+        logger.error(e);
+        res.status(201).send({ status: false, code: 201, message: message.ANNONYMOUS });
+      }
+
   try {
     var user = await confirmedBookingModel.findOne({_id : body.userId});
 
@@ -2628,14 +3053,16 @@ bookProperty : async (req,res) => {
         var bookProperty = {
           userId: body.userId,
           propertyId: body.propertyId,
-          propertyPrice: body.propertyPrice,
+          price: propertyPrice.price,
+          select_dates: dates.select_dates,
+          
+          
 
         }
         var booking = new confirmedBookingModel(bookProperty);
-
         var save_booking = await booking.save();
-        const bookedData = await confirmedBookingModel.findOneAndUpdate({
-          _id: save_booking._id,
+        const bookedData = await bookingModel.findOneAndUpdate({
+          _id: body.propertyId,
          } , {status : "3"});
         
         var response = commonfunction.checkRes(save_booking);
@@ -2740,9 +3167,13 @@ bookProperty : async (req,res) => {
       // select_dates: {
         start_date: req.body.start_date,
         end_date: req.body.end_date,
+        adults : req.body.adults,
+        childrens : req.body.childrens,
+        infants : req.body.infants,
+        no_of_room_required : req.body.no_of_room_required,
       // },
     }
-
+    console.log(body,"XXXXXXXXXXXXXXXXX");
     //Fetching User Details 
     try {
       var user= await userModel.findOne({accessToken:body.accessToken})
@@ -2774,6 +3205,12 @@ bookProperty : async (req,res) => {
           start_date: body.start_date,
           end_date: body.end_date,
         },
+        no_of_guests: {
+          adults : body.adults,
+          childrens : body.childrens,
+          infants : body.infants,
+        },
+        no_of_room_required : body.no_of_room_required,
         userId:user._id
       })
       console.log(newRequest,"newRequesXXXXXXXXXXXXXXXXXXXXXXXXXXXXXt");
@@ -2784,7 +3221,6 @@ bookProperty : async (req,res) => {
       return res.status(200).send(response);
      }
   },
-
   // Accept Request
 
   acceptOrDecline:async(req,res)=>{
@@ -2872,9 +3308,9 @@ bookProperty : async (req,res) => {
 
 // Report User
 
-reportTheUser : async(req,res)=>{
+reportTheUser:async(req,res)=>{
   var body=req.body
-  console.log(body,"Report user body")
+
   try {
     var reportingUser=await reportModel.findOne({userId:body.reportinId})
   } catch (e) {
@@ -2890,8 +3326,11 @@ reportTheUser : async(req,res)=>{
     res.status(201).send({status:false ,code:201,message:message.ANNONYMOUS})
   }
 
+  console.log(body, "YYYYYYYYYYYYYYYYYYYYYYY")
+
   try {
     if(reportingUser){
+      console.log("here.....")
       var previouslyReportedBy=await reportModel.aggregate([
         {
           "$match":{
@@ -2900,13 +3339,15 @@ reportTheUser : async(req,res)=>{
           }
         }
       ])
-      if(!previouslyReportedBy){
+      console.log("lenghtheeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",previouslyReportedBy.length)
+      if(previouslyReportedBy.length==0){
         var reportedBy={
           reportedBy_id:body.userId,
           reportedText:body.reportedText
         }
       var updateReportingId=await reportModel.findOneAndUpdate({_id:reportingUser._id},{$push:{reportedBy:reportedBy}})
-      }   
+      console.log(updateReportingId,"dasdasfgz.kfG>L?LGZISB")
+    }   
     }else{
       var data={
         userId:body.reportinId,
@@ -2922,6 +3363,7 @@ reportTheUser : async(req,res)=>{
       addReporting.save()
     }
     if(currentUser){
+      console.log("hereee is ittttt")
       var previousUser=await reportModel.aggregate([
         {
           "$match":{
@@ -2930,14 +3372,16 @@ reportTheUser : async(req,res)=>{
           }
         }
       ]);
-      if(previousUser){
-        return res.status(200).send({status:true ,code:201,message:"Already reported"})
-      }else{
+      if(previousUser.length>0){
+        return res.status(200).send({status:true ,code:201,message:"All ready reported"})
+      }else if(previousUser.length==0){
+        
         var data={
           reported_id:body.reportinId,
           reportedText:body.reportedText
         }
-        var updateCurrentUser=await reportModel.findOneAndUpdate({_id:reportingUser._id},{$push:{reportedTo:data}})  
+        console.log("here we are",data)
+        var updateCurrentUser=await reportModel.findOneAndUpdate({_id:currentUser._id},{$push:{reportedTo:data}})  
       }
     } else{
       var data={
@@ -2958,8 +3402,10 @@ reportTheUser : async(req,res)=>{
     logger.error(e);
     res.status(201).send({status:false ,code:201,message:message.ANNONYMOUS})
   }
-},
+}
 
+
+// Fetch Home Page
 
 
 

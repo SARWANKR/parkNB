@@ -8,6 +8,11 @@ const confirmedBookingSchema = new mongoose.Schema({
         start_date : { type: String, default: " " },
         end_date : { type: String ,  default: " " },
     },
+    price : { 
+        type: String,
+        trim: true,
+        default: ""
+    },
     // status : { type: String, default: '0' }, // 0 for pending, 1 for confirmed request , 2 for cancelled , 3 for booking confirmed
 
 });

@@ -69,6 +69,12 @@ router.post('/user/uploadGovtId',governmentId.array('files'),isAuthenticated,joi
 router.post('/user/updateGovtId',isAuthenticated,governmentId.array('file'),service.updateGovtId);
 router.post('/user/updateProfile',isAuthenticated,joiValidation,uploadProfilePic.single('file'),service.updateProfile);
 router.get('/user/getProfile/:id',isAuthenticated,joiValidation,service.getProfile);
+router.post('/user/interstedIn',isAuthenticated,service.interstedIn);
+router.post('/user/addvehicle',isAuthenticated,service.addvehicle);
+router.post('/user/amenities',isAuthenticated,service.amenities);
+router.get('/user/getdata',isAuthenticated,joiValidation,service.getdata);
+router.post('/user/superhost',isAuthenticated,service.superhost);
+
 
 /**********************************PROPERTY MODULES****************************************** */
 
@@ -108,7 +114,7 @@ router.post('/user/reportUser', isAuthenticated,joiValidation,service.reportTheU
 
 /*************************************BOOKING THE PROPERTY************************************ */
 
-router.post('/user/bookProperty', isAuthenticated,service.bookProperty);
+router.post('/user/bookProperty', isAuthenticated,joiValidation,service.bookProperty);
 
 // Joi Validation
 
@@ -120,6 +126,12 @@ function joiValidation(req,res,next) {
         "email" : Joi.string().email({ tlds: {allow: false} }).optional().allow(''),
         "type" : Joi.string().required(),
        
+    });
+
+    const bookPropertySchema = Joi.object({
+        "propertyId": Joi.string().required(),
+        "userId": Joi.string().required(),
+        "bookingId" : Joi.string().required(),
     });
 
     const sendLinkSchema = Joi.object({
@@ -324,12 +336,18 @@ function joiValidation(req,res,next) {
 
     })
 
+    // console.log(req.body, "PPPPPPPPPPPPPPPPPPPPPPPPP");
+
     const sendRequestSchema = Joi.object({
         "userId" : Joi.string().required(),
         "propertyId" : Joi.string().required(),
         "start_date" : Joi.string().required(),
         "end_date" : Joi.string().required(),
         "status" : Joi.string().required(),
+        "adults" : Joi.number().required(),
+        "childrens" : Joi.number().required(),
+        "infants" : Joi.number().required(),
+        "no_of_room_required" : Joi.number().required(),
 
     })
 
@@ -379,7 +397,7 @@ if(req.path=='/user/reportUser') var { error , value} = reportUserSchema.validat
 if(req.path=='/user/add/coHostProperty') var { error , value} = CohostSchema.validate(req.body,options)
 if(req.path=='/user/add/sendFeedBack') var { error , value} = sendFeedBackSchema.validate(req.body,options)
 if(req.path=='/user/uploadGovtId') var { error , value} = govSchema.validate(req.body,options)
-
+if(req.path=='/user/bookProperty') var { error , value} = bookPropertySchema.validate(req.body,options)
 
 //error handling
 if(error){
@@ -562,6 +580,10 @@ async function isAuthenticated(req,res,next) {
  *              email:
  *                type: string
  *              otp:
+ *                type: string
+ *              contact:    
+ *                type: string
+ *              countryCode:
  *                type: string
  *             
  *     responses:
@@ -1546,6 +1568,16 @@ async function isAuthenticated(req,res,next) {
  *                type: string
  *              end_date:
  *                type: string
+ *              status:
+ *                type: string
+ *              adults : 
+ *                type : string
+ *              childrens :
+ *                type : string
+ *              infants :
+ *                type : string
+ *              no_of_room_required :
+ *                type : string
  *     responses:
  *       200:
  *         description: user login
@@ -1586,6 +1618,179 @@ async function isAuthenticated(req,res,next) {
  *     responses:
  *       200:
  *         description: user login
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *       500:
+ *         description: Some server error
+ */
+
+
+/**
+ * @swagger
+ * /user/bookProperty:
+ *   post:
+ *     summary: Book Property
+ *     description: Access Token, userID and propertyID are required
+ *     tags: [users]
+ *     parameters:
+ *      - in: header
+ *        name: x-token
+ *        schema:
+ *          type: string
+ *        required: true
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *              userId: 
+ *                type : string
+ *              propertyId: 
+ *                type : string
+ *              bookingId:
+ *                type : string
+ *     responses:
+ *       200:
+ *         description: Book Property
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *       500:
+ *         description: Some server error
+ */
+
+/**
+ * @swagger
+ * /user/interstedIn:
+ *   post:
+ *     summary: Interest 
+ *     description: Interest Required (Optional)
+ *     tags: [users]
+ *     parameters:
+ *      - in: header
+ *        name: x-token
+ *        schema:
+ *          type: string
+ *        required: true
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *              interests:
+ *                type: array
+ *                items:
+ *                  type: string
+ *     responses:
+ *       200:
+ *         description: Intersted in
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *       500:
+ *         description: Some server error
+ */
+
+
+/**
+ * @swagger
+ * /user/addvehicle:
+ *   post:
+ *     summary: Add Vehicle
+ *     description: Vehicle Required (Optional)
+ *     tags: [users]
+ *     parameters:
+ *      - in: header
+ *        name: x-token
+ *        schema:
+ *          type: string
+ *        required: true
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *              vehicles:
+ *                type: array
+ *                items:
+ *                  type: string
+ *     responses:
+ *       200:
+ *         description: Add Vehicle
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *       500:
+ *         description: Some server error
+ */
+
+/**
+ * @swagger
+ * /user/amenities:
+ *   post:
+ *     summary: Add Amenities
+ *     description: Amenities Required (Optional)
+ *     tags: [users]
+ *     parameters:
+ *      - in: header
+ *        name: x-token
+ *        schema:
+ *          type: string
+ *        required: true
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *              amenities:
+ *                type: array
+ *                items:
+ *                  type: string
+ *     responses:
+ *       200:
+ *         description: Add Amenities
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *       500:
+ *         description: Some server error
+ */
+
+/**
+ * @swagger
+ * /user/getdata:
+ *   get:
+ *     summary: Get Data
+ *     description: status required
+ *     tags: [users]
+ *     parameters:
+ *      - in: header
+ *        description: required
+ *        name: x-token
+ *        schema:
+ *          type: string
+ *      - in: query
+ *        name: status
+ *        schema:
+ *          type: string
+ *        required: true
+ *     responses:
+ *       200:
+ *         description: get data success
  *         content:
  *           application/json:
  *             schema:
