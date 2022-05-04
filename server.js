@@ -15,8 +15,6 @@ const adminRoute = require('./components/admin/routes')
 const cors=require('cors');
 const path= require('path')
 
-
-
 //swagger setup
 const options={
     definition:{
