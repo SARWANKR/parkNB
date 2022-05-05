@@ -3011,15 +3011,6 @@ module.exports = {
 
 bookProperty : async (req,res) => {
   var body = req.body;
-
-    try {
-
-      
-    }
-    catch (e) {
-      logger.error(e);
-      return res.status(201).send({ status: false, code: 201, message: message.ANNONYMOUS });
-    }
      try {
 
       var propertyPrice = await propertyModel.findOne({_id: body.propertyId});
@@ -3086,6 +3077,53 @@ bookProperty : async (req,res) => {
   }
 
 },
+
+// Cancel Property Booking
+
+  cancelBooking: async (req, res) => {
+    var body = req.body;
+    try {
+      var user = await userModel.findOne({
+        accessToken: req.headers["x-token"],
+      });
+
+      console.log(user, "Hello I am the userrr");
+    } catch (e) {
+      logger.error(e);
+      return res
+        .status(201)
+        .send({ status: false, code: 201, message: message.ANNONYMOUS });
+    }
+
+    try {
+      var booking = await bookingModel.findOne({
+        _id: body.bookingId,
+      })
+      // console.log(booking, "Hello I am the booking");
+      if(booking.status == "4"){
+        var message = "Booking Already Cancelled";
+        res.status(201).send({ status: false, code: 201, message: message });
+      }
+      else{
+        var cancelBooking = await bookingModel.findOneAndUpdate({
+          _id: body.bookingId,
+          } , {status : "4"})
+        var response = commonfunction.checkRes(cancelBooking);
+        res.status(200).send({status: true,code: 200,response,message: "Booking Cancelled Succesfully"});
+      }
+
+    }
+    catch (e) {
+      logger.error(e);
+      return res
+        .status(201)
+        .send({ status: false, code: 201, message: message.ANNONYMOUS });
+    }
+
+
+
+
+  },
 
   // Book Event
 
@@ -3402,13 +3440,178 @@ reportTheUser:async(req,res)=>{
     logger.error(e);
     res.status(201).send({status:false ,code:201,message:message.ANNONYMOUS})
   }
+},
+
+
+// Filters for user
+
+  filterProperty:async (req, res) => {
+
+    try {
+      var user = await userModel.findOne({
+        accessToken: req.headers["x-token"],
+      });
+
+      console.log(user, "Hello I am the userrr");
+    } catch (e) {
+      logger.error(e);
+      return res
+        .status(201)
+        .send({ status: false, code: 201, message: message.ANNONYMOUS });
+    }
+
+
+    try {
+
+      var filter = await propertyModel.aggregate([
+        {
+          '$geoNear': {
+            'near': {
+              'type': 'Point', 
+              'coordinates': [
+                54.21, 75.25
+              ]
+            }, 
+            'distanceField': 'distace', 
+            'maxDistance': 500, 
+            'spherical': true
+          }
+        }, {
+          '$unwind': {
+            'path': '$property_type', 
+            'includeArrayIndex': 'string', 
+            'preserveNullAndEmptyArrays': true
+          }
+        }, {
+          '$lookup': {
+            'from': 'propertytypes', 
+            'localField': 'property_type', 
+            'foreignField': '_id', 
+            'as': 'type'
+          }
+        }, {
+          '$unwind': {
+            'path': '$type', 
+            'includeArrayIndex': 'string', 
+            'preserveNullAndEmptyArrays': true
+          }
+        }, {
+          '$group': {
+            '_id': '$_id', 
+            'userId': {
+              '$first': '$userId'
+            }, 
+            'add_title': {
+              '$first': '$add_title'
+            }, 
+            'add_description': {
+              '$first': '$add_description'
+            }, 
+            'amenities': {
+              '$first': '$amenities'
+            }, 
+            'property_type': {
+              '$first': '$property_type'
+            }, 
+            'country': {
+              '$first': '$country'
+            }, 
+            'activities': {
+              '$first': '$activities'
+            }, 
+            'guests': {
+              '$first': '$guests'
+            }, 
+            'not_to_bring': {
+              '$first': '$not_to_bring'
+            }, 
+            'rules': {
+              '$first': '$rules'
+            }, 
+            'co_host': {
+              '$first': '$co_host'
+            }, 
+            'pictures': {
+              '$first': '$pictures'
+            }, 
+            'price': {
+              '$first': '$price'
+            }, 
+            'select_dates': {
+              '$first': '$select_dates'
+            }, 
+            'location': {
+              '$first': '$location'
+            }, 
+            'type': {
+              '$push': '$type'
+            }
+          }
+        }, {
+          '$match': {
+            'price': {
+              '$gte': '3000', 
+              '$lte': '5000'
+            }, 
+            'type.property_type': {
+              '$in': [
+                'Bunglow'
+              ]
+            }
+          }
+        }
+      ])
+
+      // console.log(filter, "Hello I am the filter");
+      res.status(200).send({ status: true, code: 200, message: "Filter successfully", data: filter });
+    }
+
+    catch (e) {
+      logger.error(e);
+      return res
+        .status(201)
+        .send({ status: false, code: 201, message: message.ANNONYMOUS });
+    }
+
+  },
+
+  // Get Home Screen Data
+
+  getHomeScreenData: async (req, res) => {
+    var body = req.body;
+    try {
+      var user = await userModel.findOne({
+        accessToken: req.headers["x-token"],
+      });
+
+    } catch (e) {
+      logger.error(e);
+      return res
+        .status(201)
+        .send({ status: false, code: 201, message: message.ANNONYMOUS });
+    }
+
+    try {
+      var homedata = await propertyModel.aggregate([
+        
+      ])
+
+    }
+    catch (e) {
+      logger.error(e);
+      return res
+        .status(201)
+        .send({ status: false, code: 201, message: message.ANNONYMOUS });
+    }
+  }
+
+
+
+
+
+
+
+
+
+
 }
-
-
-// Fetch Home Page
-
-
-
-
-
-};

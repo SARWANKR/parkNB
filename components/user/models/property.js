@@ -48,6 +48,8 @@ const propertySchema = new mongoose.Schema({
 
 })
 
+propertySchema.index({ "location": "2dsphere" });
+
 const propertyModel = mongoose.model('Addproperty', propertySchema);
 
 module.exports = propertyModel;

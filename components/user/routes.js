@@ -115,6 +115,8 @@ router.post('/user/reportUser', isAuthenticated,joiValidation,service.reportTheU
 /*************************************BOOKING THE PROPERTY************************************ */
 
 router.post('/user/bookProperty', isAuthenticated,joiValidation,service.bookProperty);
+router.post('/user/cancelBooking', isAuthenticated,service.cancelBooking);
+router.post('/user/filterProperty', isAuthenticated,service.filterProperty);
 
 // Joi Validation
 
@@ -361,6 +363,11 @@ function joiValidation(req,res,next) {
         "reportedText":Joi.string().optional().allow('')
     })
 
+    const cancelBookingSchema = Joi.object({
+        "requestId" : Joi.string().required()
+        // "status" : Joi.string().required(),
+    })
+
 
     // schema options
    const options = {
@@ -398,6 +405,7 @@ if(req.path=='/user/add/coHostProperty') var { error , value} = CohostSchema.val
 if(req.path=='/user/add/sendFeedBack') var { error , value} = sendFeedBackSchema.validate(req.body,options)
 if(req.path=='/user/uploadGovtId') var { error , value} = govSchema.validate(req.body,options)
 if(req.path=='/user/bookProperty') var { error , value} = bookPropertySchema.validate(req.body,options)
+if(req.path=='/user/cancelBooking') var { error , value} = cancelBookingSchema.validate(req.body,options)
 
 //error handling
 if(error){
@@ -1666,6 +1674,41 @@ async function isAuthenticated(req,res,next) {
 
 /**
  * @swagger
+ * /user/cancelBooking:
+ *   post:
+ *     summary: Cancel Booking
+ *     description: Access Token, Requested Id and Status Required
+ *     tags: [users]
+ *     parameters:
+ *      - in: header
+ *        name: x-token
+ *        schema:
+ *          type: string
+ *        required: true
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *              bookingId:
+ *                type : string
+ *              status:
+ *                type : string 
+ *     responses:
+ *       200:
+ *         description: Book Property
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *       500:
+ *         description: Some server error
+ */
+
+/**
+ * @swagger
  * /user/interstedIn:
  *   post:
  *     summary: Interest 
@@ -1762,6 +1805,30 @@ async function isAuthenticated(req,res,next) {
  *     responses:
  *       200:
  *         description: Add Amenities
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *       500:
+ *         description: Some server error
+ */
+
+/**
+ * @swagger
+ * /user/filterProperty:
+ *   post:
+ *     summary: Cancel Booking
+ *     description: Access Token, Requested Id and Status Required
+ *     tags: [users]
+ *     parameters:
+ *      - in: header
+ *        name: x-token
+ *        schema:
+ *          type: string
+ *        required: true
+ *     responses:
+ *       200:
+ *         description: Book Property
  *         content:
  *           application/json:
  *             schema:
