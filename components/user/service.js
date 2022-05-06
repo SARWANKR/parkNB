@@ -25,6 +25,7 @@ const parknb = require("../../index");
 const amenitiesModel= require('../admin/models/amenities');
 const interestModel= require('../admin/models/interesttedIn');
 const vehicleModel= require('../admin/models/typeOfVehicle');
+const BannerModel = require('../../components/admin/models/banner')
 
 
 module.exports = {
@@ -3579,6 +3580,7 @@ reportTheUser:async(req,res)=>{
 
   getHomeScreenData: async (req, res) => {
     var body = req.body;
+    console.log(body, "PPPPPPPPPPPPPPPPPPPPPPPP");
     try {
       var user = await userModel.findOne({
         accessToken: req.headers["x-token"],
@@ -3593,25 +3595,188 @@ reportTheUser:async(req,res)=>{
 
     try {
       var homedata = await propertyModel.aggregate([
-        
+        {
+          '$geoNear': {
+            'near': {
+              'type': 'Point', 
+              'coordinates': [
+                54.25, 76.25
+              ]
+            }, 
+            'distanceField': 'distance', 
+            'maxDistance': 500000, 
+            'spherical': true
+          }
+        }, {
+          '$lookup': {
+            'from': 'propertyreviews', 
+            'let': {
+              'id': '$_id'
+            }, 
+            'pipeline': [
+              {
+                '$match': {
+                  '$expr': {
+                    '$eq': [
+                      '$propertyId', '$$id'
+                    ]
+                  }
+                }
+              }
+            ], 
+            'as': 'reviews'
+          }
+        }, {
+          '$unwind': '$reviews'
+        }, {
+          '$project': {
+            'userId': '$userId', 
+            'property_type': '$property_type', 
+            'add_title': '$add_title', 
+            'add_description': '$add_description', 
+            'amenities': '$amenities', 
+            'country': '$country', 
+            'activities': '$activities', 
+            'guests': '$guests', 
+            'not_to_bring': '$not_to_bring', 
+            'rules': '$rules', 
+            'co_host': '$co_host', 
+            'pictures': '$pictures', 
+            'price': '$price', 
+            'select_dates': '$select_dates', 
+            'location': '$location', 
+            'distance': '$distance', 
+            'ratings': {
+              '$convert': {
+                'input': '$reviews.rating', 
+                'to': 'double'
+              }
+            }, 
+            'reviews': '$reviews'
+          }
+        }, {
+          '$group': {
+            '_id': '$reviews.propertyId', 
+            'propertyId': {
+              '$first': '$_id'
+            }, 
+            'property_type': {
+              '$first': '$property_type'
+            }, 
+            'add_title': {
+              '$first': '$add_title'
+            }, 
+            'add_description': {
+              '$first': '$add_description'
+            }, 
+            'amenities': {
+              '$first': '$amenities'
+            }, 
+            'country': {
+              '$first': '$country'
+            }, 
+            'activities': {
+              '$first': '$activities'
+            }, 
+            'guest': {
+              '$first': '$guests'
+            }, 
+            'not_to_bring': {
+              '$first': '$not_to_bring'
+            }, 
+            'rules': {
+              '$first': '$rules'
+            }, 
+            'co_host': {
+              '$first': '$co_host'
+            }, 
+            'pictures': {
+              '$first': '$pictures'
+            }, 
+            'price': {
+              '$first': '$price'
+            }, 
+            'select_dates': {
+              '$first': '$select_dates'
+            }, 
+            'location': {
+              '$first': '$location'
+            }, 
+            'rating_sum': {
+              '$sum': '$ratings'
+            }, 
+            'totalDocs': {
+              '$count': {}
+            }, 
+            'reviews': {
+              '$push': '$reviews'
+            }
+          }
+        }, {
+          '$project': {
+            'userId': '$userId', 
+            'property_type': '$property_type', 
+            'add_title': '$add_title', 
+            'add_description': '$add_description', 
+            'amenities': '$amenities', 
+            'country': '$country', 
+            'activities': '$activities', 
+            'guests': '$guests', 
+            'not_to_bring': '$not_to_bring', 
+            'rules': '$rules', 
+            'co_host': '$co_host', 
+            'pictures': '$pictures', 
+            'price': '$price', 
+            'select_dates': '$select_dates', 
+            'location': '$location', 
+            'distance': '$distance', 
+            'rating_sum': '$rating_sum', 
+            'totalDoc': '$totalDocs', 
+            'propertyreviewsAverage': {
+              '$divide': [
+                '$rating_sum', '$totalDocs'
+              ]
+            }
+          }
+        }, {
+          '$addFields': {
+            'min_rating': 2
+          }
+        }, {
+          '$project': {
+            'data': {
+              '$cond': {
+                'if': {
+                  '$gte': [
+                    '$propertyreviewsAverage', 2
+                  ]
+                }, 
+                'then': {
+                  'property_type': '$property_type', 
+                  'add_title': '$add_title', 
+                  'country': '$country', 
+                  'pictures': '$pictures', 
+                  'propertyreviewsAverage': '$propertyreviewsAverage'
+                }, 
+                'else': null
+              }
+            }, 
+            '_id': 0
+          }
+        }
       ])
-
+      console.log(homedata, "99999999999999999999999999999999999999999999");
+      var bannerData = await BannerModel.findOne({});
+      var propertyData = await propertyModel.find({});
+      res.status(200).send({ status: true, code: 200, message: message.SUCCESS, data: homedata, bannerData: bannerData , propertyData: propertyData});
     }
     catch (e) {
       logger.error(e);
-      return res
+       res
         .status(201)
         .send({ status: false, code: 201, message: message.ANNONYMOUS });
     }
-  }
 
 
-
-
-
-
-
-
-
-
+}
 }

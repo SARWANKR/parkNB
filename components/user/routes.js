@@ -118,6 +118,10 @@ router.post('/user/bookProperty', isAuthenticated,joiValidation,service.bookProp
 router.post('/user/cancelBooking', isAuthenticated,service.cancelBooking);
 router.post('/user/filterProperty', isAuthenticated,service.filterProperty);
 
+/*************************************HOME SCREEN******************************************** */
+
+router.get('/user/homeScreen', isAuthenticated,service.getHomeScreenData);
+
 // Joi Validation
 
 function joiValidation(req,res,next) {
