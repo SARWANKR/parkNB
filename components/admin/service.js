@@ -9,6 +9,7 @@ const adminAmenitiesModel = require('./models/adminAmenities')
 const cancellationPolicyModel = require('./models/cancellationPolicy')
 const rulesModel = require('./models/rules')
 const adminModel = require('./models/admin')
+const BannerModel = require('./models/banner')
 // const notToBringModel = require('./models/notToBring')
 const commonfunction = require("../commonfunctions");
 const messages = require("../commonfunctions").customMessages();
@@ -510,9 +511,43 @@ login:async(req,res)=>{
     },
 
 
+    addbanner: async (req, res) => {
 
-    
+      var body = req.body;
+      var file = req.files;
+      var longitude = parseFloat(body.longitude);
+      var latitude = parseFloat(body.latitude);
 
+      console.log(body , "PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP");
+  
+      // console.log(body, "Hey! I am body....");
+  
+      try {
+        var pic = [];
+        for (const obj of file) {
+          var i = `uploads/${obj.filename}`;
+          pic.push(i);
+        }
+  
+        var data = {
+          title : body.title,
+          description : body.description,
+          image: pic,
+          location: {
+            type: "Point",
+            coordinates: [longitude, latitude],
+          },
+        };
+        // connsole.log(data, "Hllllllllllllllllllllllllllllll");
+        var banner = new BannerModel(data);
+        var addbanner1 = await banner.save();
+        var response = commonfunction.checkRes(addbanner1);
+        res.status(200).send({status: true,code: 200,messages: "Added successfully"});
+      } catch (e) {
+        logger.error(e);
+        return res.status(201).send({ status: false, code: 201, message: messages.ANNONYMOUS });
+      }
+    },
   
 
 }

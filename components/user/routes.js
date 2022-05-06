@@ -54,7 +54,7 @@ var uploadEvent = multer({ storage: event});
 
 // Routes
   /***************************AUTHENTICATION MODULES*************************************** */
-router.post('/user/generateOtp',joiValidation,service.generateOtp);
+// router.post('/user/generateOtp',joiValidation,service.generateOtp);
 router.post('/user/verifyOtp',joiValidation,service.verifyOtp);
 router.post('/user/register',joiValidation,service.register);
 router.post('/user/resendOtp',joiValidation,service.resendOtp);
@@ -448,39 +448,6 @@ async function isAuthenticated(req,res,next) {
  
    
 }
-
-
-/**
- * @swagger
- * /user/generateOtp:
- *   post:
- *     summary: generate otp
- *     description: email, contact and countryCode is required
- *     tags: [users]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *              contact:
- *                type: string
- *              countryCode:
- *                type: string
- *              email:
- *                type: string
- *             
- *     responses:
- *       200:
- *         description: user login
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *       500:
- *         description: Some server error
- */
 
 
 /**

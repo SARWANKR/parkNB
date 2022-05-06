@@ -8,6 +8,18 @@ const jwt = require('jsonwebtoken');
 const multer = require('multer');
 const adminModel = require('./models/admin');
 
+const storage = multer.diskStorage({
+    destination: function (req, file ,cb) {
+        cb(null, './public/banner')
+
+    },
+    filename: function (req, file, cb) {
+        cb(null,"FILE-" + Date.now() + (file.originalname))
+    }
+})
+
+var upload = multer({storage:storage});
+
 
 
 
@@ -40,6 +52,8 @@ router.post('/admin/add/removeadminamenities',isAuthenticated,joiValidation,serv
 
 router.post('/admin/add/addcancellationpolicy',isAuthenticated,joiValidation,service.addcancellationpolicy)
 router.post('/admin/add/addrules',isAuthenticated,joiValidation,service.addrules)
+
+router.post('/admin/add/addbanner',isAuthenticated,upload.array('file'),service.addbanner);
 
 
 // Joi Validation
