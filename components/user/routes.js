@@ -122,6 +122,7 @@ router.post('/user/filterProperty', isAuthenticated,service.filterProperty);
 
 router.get('/user/homeScreen', isAuthenticated,service.getHomeScreenData);
 router.get('/user/myListing', isAuthenticated,service.myListing);
+router.get('/user/getTripsDetails', isAuthenticated,service.getTripsDetails);
 
 // Joi Validation
 
