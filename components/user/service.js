@@ -3778,5 +3778,749 @@ reportTheUser:async(req,res)=>{
     }
 
 
-}
+},
+
+// Get Trips Details
+  getTripsDetails: async (req, res) => {
+    var body = req.body;
+    try {
+      var user = await userModel.findOne({
+        accessToken: req.headers["x-token"],
+      });
+
+    } catch (e) {
+      logger.error(e);
+      return res.status(201).send({ status: false, code: 201, message: message.ANNONYMOUS });
+    }
+
+    try {
+
+      var mytrips = await bookingModel.aggregate(
+        [
+          {
+            '$match': {
+              '_id': new ObjectId('6270ff0023e4762595cce65b'), 
+              'status': '4'
+            }
+          }, {
+            '$lookup': {
+              'from': 'addproperties', 
+              'let': {
+                'id': '$propertyId'
+              }, 
+              'pipeline': [
+                {
+                  '$match': {
+                    '$expr': {
+                      '$eq': [
+                        '$_id', '$$id'
+                      ]
+                    }
+                  }
+                }
+              ], 
+              'as': 'Property'
+            }
+          }, {
+            '$unwind': {
+              'path': '$Property', 
+              'includeArrayIndex': 'string', 
+              'preserveNullAndEmptyArrays': true
+            }
+          }, {
+            '$lookup': {
+              'from': 'propertyreviews', 
+              'let': {
+                'id': '$propertyId'
+              }, 
+              'pipeline': [
+                {
+                  '$match': {
+                    '$expr': {
+                      '$eq': [
+                        '$propertyId', '$$id'
+                      ]
+                    }
+                  }
+                }, {
+                  '$project': {
+                    'rating': {
+                      '$convert': {
+                        'input': '$rating', 
+                        'to': 'double'
+                      }
+                    }
+                  }
+                }, {
+                  '$group': {
+                    '_id': '_id', 
+                    'count': {
+                      '$count': {}
+                    }, 
+                    'totalrating': {
+                      '$sum': '$rating'
+                    }
+                  }
+                }, {
+                  '$project': {
+                    '_id': 0, 
+                    'avg': {
+                      '$divide': [
+                        '$totalrating', '$count'
+                      ]
+                    }
+                  }
+                }
+              ], 
+              'as': 'propertyreview'
+            }
+          }, {
+            '$unwind': {
+              'path': '$propertyreview', 
+              'includeArrayIndex': 'string', 
+              'preserveNullAndEmptyArrays': true
+            }
+          }, {
+            '$project': {
+              'userId': '$userId', 
+              'propertyId': '$propertyId', 
+              'select_dates': '$select_dates', 
+              'no_of_rooms_required': '$no_of_room_required', 
+              'no_of_guests': '$no_of_guests', 
+              'status': '$status', 
+              'acceptedAt': '$acceptedAt', 
+              'dueDate': '$dueDate', 
+              'property': '$Property', 
+              'propertyreview': '$propertyreview'
+            }
+          }, {
+            '$project': {
+              'propertyName': '$property.add_title', 
+              'pictures': '$property.pictures', 
+              'avg_rating': '$propertyreview.avg', 
+              'country': '$property.country'
+            }
+          }
+        ]
+      )
+      // console.log(mytrips, "99999999999999999999999999999999999999999999");
+      res.status(200).send({ status: true, code: 200, message: message.SUCCESS, data: mytrips });
+
+
+    }
+    catch (e) {
+      logger.error(e);
+        return res.status(201).send({ status: false, code: 201, message: message.ANNONYMOUS });
+    }
+  },
+
+// My Listing Data  (My Listing)
+
+  myListing: async (req, res) =>{
+    var body = req.body;
+    try {
+      var user = await userModel.findOne({
+        accessToken: req.headers["x-token"],
+      });
+
+    } catch (e) {
+      logger.error(e);
+      return res.status(201).send({ status: false, code: 201, message: message.ANNONYMOUS });
+    }
+    try{
+      if(body.type == "1"){
+      var myListingData = await userModel.aggregate([
+        {
+          '$match': {
+            '_id': new ObjectId('627216c302fe4aeb3d057edd')
+          }
+        }, {
+          '$lookup': {
+            'from': 'addproperties', 
+            'let': {
+              'id': '$_id'
+            }, 
+            'pipeline': [
+              {
+                '$match': {
+                  '$expr': {
+                    '$eq': [
+                      '$userId', '$$id'
+                    ]
+                  }
+                }
+              }, {
+                '$lookup': {
+                  'from': 'propertyreviews', 
+                  'let': {
+                    'id': '$_id'
+                  }, 
+                  'pipeline': [
+                    {
+                      '$match': {
+                        '$expr': {
+                          '$eq': [
+                            '$propertyId', '$$id'
+                          ]
+                        }
+                      }
+                    }, {
+                      '$project': {
+                        'rating': {
+                          '$convert': {
+                            'input': '$rating', 
+                            'to': 'double'
+                          }
+                        }
+                      }
+                    }, {
+                      '$group': {
+                        '_id': '_id', 
+                        'count': {
+                          '$count': {}
+                        }, 
+                        'totalrating': {
+                          '$sum': '$rating'
+                        }
+                      }
+                    }, {
+                      '$project': {
+                        '_id': 0, 
+                        'averagerating': {
+                          '$divide': [
+                            '$totalrating', '$count'
+                          ]
+                        }
+                      }
+                    }
+                  ], 
+                  'as': 'review'
+                }
+              }, {
+                '$unwind': '$review'
+              }
+            ], 
+            'as': 'property'
+          }
+        }, {
+          '$unwind': {
+            'path': '$property', 
+            'includeArrayIndex': 'string', 
+            'preserveNullAndEmptyArrays': true
+          }
+        }, {
+          '$project': {
+            'add_title': '$property.add_title', 
+            'country': '$property.country', 
+            'picture': '$property.pictures', 
+            'price': '$property.price', 
+            'avgrating': '$property.review.averagerating'
+          }
+        }
+      ])
+      res.status(200).send({ status: true, code: 200, message: "My Property", data:myListingData  });
+    } 
+    else if(body.type == "2"){
+
+      var cohosted = await userModel.aggregate([
+        {
+          '$match': {
+            'userId': new ObjectId('626670946f44cda3135433ae')
+          }
+        }, {
+          '$lookup': {
+            'from': 'addproperties', 
+            'let': {
+              'id': '$propertyId'
+            }, 
+            'pipeline': [
+              {
+                '$match': {
+                  '$expr': {
+                    '$eq': [
+                      '$_id', '$$id'
+                    ]
+                  }
+                }
+              }, {
+                '$match': {
+                  'co_host': true
+                }
+              }, {
+                '$lookup': {
+                  'from': 'propertyreviews', 
+                  'let': {
+                    'id': '$_id'
+                  }, 
+                  'pipeline': [
+                    {
+                      '$match': {
+                        '$expr': {
+                          '$eq': [
+                            '$propertyId', '$$id'
+                          ]
+                        }
+                      }
+                    }, {
+                      '$project': {
+                        'rating': {
+                          '$convert': {
+                            'input': '$rating', 
+                            'to': 'double'
+                          }
+                        }
+                      }
+                    }, {
+                      '$group': {
+                        '_id': '', 
+                        'count': {
+                          '$count': {}
+                        }, 
+                        'totalrating': {
+                          '$sum': '$rating'
+                        }, 
+                        'id': {
+                          '$first': '$_id'
+                        }
+                      }
+                    }, {
+                      '$project': {
+                        '_id': 0, 
+                        'averagerating': {
+                          '$divide': [
+                            '$totalrating', '$count'
+                          ]
+                        }
+                      }
+                    }
+                  ], 
+                  'as': 'review'
+                }
+              }, {
+                '$unwind': '$review'
+              }
+            ], 
+            'as': 'property'
+          }
+        }, {
+          '$unwind': {
+            'path': '$property', 
+            'includeArrayIndex': 'string', 
+            'preserveNullAndEmptyArrays': true
+          }
+        }, {
+          '$project': {
+            'title': '$property.add_title', 
+            'avgrating': '$property.review.averagerating', 
+            'country': '$property.country', 
+            'price': '$property.price', 
+            'pictures': '$property.pictures'
+          }
+        }
+      ])
+      res.status(200).send({ status: true, code: 200, message: "Property I Already Co-hosted", data:cohosted  });
+    }
+
+    else if(body.type == "3"){
+
+      var availableforcohost = await userModel.aggregate([
+        {
+          '$match': {
+            '_id': new ObjectId('626921f9a0ced3757d8dde52'), 
+            'co_host': true
+          }
+        }, {
+          '$lookup': {
+            'from': 'propertyreviews', 
+            'let': {
+              'id': '$_id'
+            }, 
+            'pipeline': [
+              {
+                '$match': {
+                  '$expr': {
+                    '$eq': [
+                      '$propertyId', '$$id'
+                    ]
+                  }
+                }
+              }
+            ], 
+            'as': 'review'
+          }
+        }, {
+          '$unwind': {
+            'path': '$review', 
+            'includeArrayIndex': 'string', 
+            'preserveNullAndEmptyArrays': true
+          }
+        }, {
+          '$group': {
+            '_id': '$_id', 
+            'count': {
+              '$count': {}
+            }, 
+            'userId': {
+              '$first': '$userId'
+            }, 
+            'property_type': {
+              '$first': '$userId'
+            }, 
+            'add_title': {
+              '$first': '$add_title'
+            }, 
+            'add_description': {
+              '$first': '$add_description'
+            }, 
+            'amenities': {
+              '$first': '$amenities'
+            }, 
+            'country': {
+              '$first': '$country'
+            }, 
+            'activities': {
+              '$first': '$activities'
+            }, 
+            'guests': {
+              '$first': '$guests'
+            }, 
+            'not_to_bring': {
+              '$first': '$not_to_bring'
+            }, 
+            'rules': {
+              '$first': '$rules'
+            }, 
+            'co_host': {
+              '$first': '$co_host'
+            }, 
+            'pictures': {
+              '$first': '$pictures'
+            }, 
+            'price': {
+              '$first': '$price'
+            }, 
+            'select_dates': {
+              '$first': '$select_dates'
+            }, 
+            'location': {
+              '$first': '$location'
+            }, 
+            'review': {
+              '$push': '$review'
+            }
+          }
+        }, {
+          '$unwind': {
+            'path': '$review', 
+            'includeArrayIndex': 'string', 
+            'preserveNullAndEmptyArrays': true
+          }
+        }, {
+          '$project': {
+            'count': '$count', 
+            'userId': '$userId', 
+            'property_type': '$property_type', 
+            'add_title': '$add_title', 
+            'add_description': '$add_description', 
+            'amenities': '$amenities', 
+            'rating': {
+              '$convert': {
+                'input': '$review.rating', 
+                'to': 'double'
+              }
+            }, 
+            'country': '$country', 
+            'activities': '$activities', 
+            'guests': '$guests', 
+            'not_to_bring': '$not_to_bring', 
+            'rules': '$rules', 
+            'co_host': '$co_host', 
+            'pictures': '$pictures', 
+            'price': '$price', 
+            'select_dates': '$select_dates', 
+            'location': '$location', 
+            'review': '$review'
+          }
+        }, {
+          '$group': {
+            '_id': '$_id', 
+            'userId': {
+              '$first': '$userId'
+            }, 
+            'property_type': {
+              '$first': '$userId'
+            }, 
+            'add_title': {
+              '$first': '$add_title'
+            }, 
+            'add_description': {
+              '$first': '$add_description'
+            }, 
+            'amenities': {
+              '$first': '$amenities'
+            }, 
+            'country': {
+              '$first': '$country'
+            }, 
+            'activities': {
+              '$first': '$activities'
+            }, 
+            'guests': {
+              '$first': '$guests'
+            }, 
+            'not_to_bring': {
+              '$first': '$not_to_bring'
+            }, 
+            'rules': {
+              '$first': '$rules'
+            }, 
+            'co_host': {
+              '$first': '$co_host'
+            }, 
+            'pictures': {
+              '$first': '$pictures'
+            }, 
+            'price': {
+              '$first': '$price'
+            }, 
+            'select_dates': {
+              '$first': '$select_dates'
+            }, 
+            'location': {
+              '$first': '$location'
+            }, 
+            'review': {
+              '$push': '$review'
+            }, 
+            'totalrating': {
+              '$sum': '$rating'
+            }, 
+            'count': {
+              '$first': '$count'
+            }
+          }
+        }, {
+          '$project': {
+            'avgrating': {
+              '$divide': [
+                '$totalrating', '$count'
+              ]
+            }, 
+            'add_title': '$add_title', 
+            'country': '$country', 
+            'pictures': '$pictures', 
+            'price': '$price'
+          }
+        }
+      ])
+
+      res.status(200).send({ status: true, code: 200, message: "My Property Available for cohost", data:availableforcohost  });
+
+    }
+    else if(body.type == "4"){
+
+      var availableproperty = await propertyModel.aggregate(
+        [
+          {
+            '$geoNear': {
+              'near': {
+                'type': 'Point', 
+                'coordinates': [
+                  54.25, 75.25
+                ]
+              }, 
+              'distanceField': 'distace', 
+              'maxDistance': 5000000, 
+              'spherical': true
+            }
+          }, {
+            '$match': {
+              'co_host': true, 
+              'userId': {
+                '$ne': new ObjectId('627216c302fe4aeb3d057ede')
+              }
+            }
+          }, {
+            '$lookup': {
+              'from': 'propertyreviews', 
+              'let': {
+                'id': '$_id'
+              }, 
+              'pipeline': [
+                {
+                  '$match': {
+                    '$expr': {
+                      '$eq': [
+                        '$propertyId', '$$id'
+                      ]
+                    }
+                  }
+                }
+              ], 
+              'as': 'review'
+            }
+          }, {
+            '$group': {
+              '_id': '$userId', 
+              'property_type': {
+                '$first': '$property_type'
+              }, 
+              'add_title': {
+                '$first': '$add_title'
+              }, 
+              'add_description': {
+                '$first': '$add_description'
+              }, 
+              'amenities': {
+                '$first': '$amenities'
+              }, 
+              'country': {
+                '$first': '$country'
+              }, 
+              'activities': {
+                '$first': '$activities'
+              }, 
+              'guests': {
+                '$first': '$guests'
+              }, 
+              'not_to_bring': {
+                '$first': '$not_to_bring'
+              }, 
+              'rules': {
+                '$first': '$rules'
+              }, 
+              'co_host': {
+                '$first': '$co_host'
+              }, 
+              'pictures': {
+                '$first': '$pictures'
+              }, 
+              'price': {
+                '$first': '$price'
+              }, 
+              'select_dates': {
+                '$first': '$select_dates'
+              }, 
+              'location': {
+                '$first': '$location'
+              }, 
+              'distance': {
+                '$first': '$distace'
+              }, 
+              'propertyreview': {
+                '$first': '$review'
+              }, 
+              'count': {
+                '$count': {}
+              }
+            }
+          }, {
+            '$unwind': {
+              'path': '$propertyreview', 
+              'includeArrayIndex': 'string', 
+              'preserveNullAndEmptyArrays': true
+            }
+          }, {
+            '$project': {
+              'property_type': '$property_type', 
+              'add_title': '$add_title', 
+              'add_description': '$add_description', 
+              'amenities': '$amenities', 
+              'country': '$country', 
+              'activities': '$activities', 
+              'guests': '$guests', 
+              'not_to_bring': '$not_to_bring', 
+              'rules': '$rules', 
+              'co_host': '$co_host', 
+              'pictures': '$pictures', 
+              'price': '$price', 
+              'select_dates': '$select_dates', 
+              'location': '$location', 
+              'distance': '$distance', 
+              'rating': {
+                '$convert': {
+                  'input': '$propertyreview.rating', 
+                  'to': 'double'
+                }
+              }
+            }
+          }, {
+            '$group': {
+              '_id': '$_id', 
+              'property_type': {
+                '$first': '$property_type'
+              }, 
+              'add_title': {
+                '$first': '$add_title'
+              }, 
+              'add_description': {
+                '$first': '$add_description'
+              }, 
+              'amenities': {
+                '$first': '$amenities'
+              }, 
+              'country': {
+                '$first': '$country'
+              }, 
+              'activities': {
+                '$first': '$activities'
+              }, 
+              'guests': {
+                '$first': '$guests'
+              }, 
+              'not_to_bring': {
+                '$first': '$not_to_bring'
+              }, 
+              'rules': {
+                '$first': '$rules'
+              }, 
+              'co_host': {
+                '$first': '$co_host'
+              }, 
+              'pictures': {
+                '$first': '$pictures'
+              }, 
+              'price': {
+                '$first': '$price'
+              }, 
+              'select_dates': {
+                '$first': '$select_dates'
+              }, 
+              'location': {
+                '$first': '$location'
+              }, 
+              'distance': {
+                '$first': '$distance'
+              }, 
+              'count': {
+                '$count': {}
+              }, 
+              'totalrating': {
+                '$sum': '$rating'
+              }
+            }
+          }, {
+            '$project': {
+              'add_title': '$add_title', 
+              'avgrating': {
+                '$divide': [
+                  '$totalrating', '$count'
+                ]
+              }, 
+              'country': '$country', 
+              'price': '$price', 
+              'picture': '$pictures'
+            }
+          }
+        ] 
+      )
+      res.status(200).send({ status: true, code: 200, message: "Nearby property Available for Cohost", data:availableproperty  });
+    }
+
+    }
+    catch(e){
+      logger.error(e);
+      return res.status(201).send({ status: false, code: 201, message: message.ANNONYMOUS });
+    }
+  }
 }
